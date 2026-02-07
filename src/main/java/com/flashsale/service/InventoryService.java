@@ -25,7 +25,7 @@ public class InventoryService {
      */
     public void initializeInventory(Long productId, Integer stockCount) {
         productRepository.findById(productId).ifPresent(product -> {
-            product.setStock(stockCount);
+            product.setStockCount(stockCount);
             productRepository.save(product);
             log.info("Initialized inventory for product {} with {} items", productId, stockCount);
         });
@@ -48,16 +48,16 @@ public class InventoryService {
         }
         
         // Check current stock
-        if (product.getStock() <= 0) {
+        if (product.getStockCount() <= 0) {
             log.warn("Product {} is out of stock", productId);
             return -1L;
         }
         
         // Atomic decrement using database
-        product.setStock(product.getStock() - 1);
+        product.setStockCount(product.getStockCount() - 1);
         productRepository.save(product);
         
-        Long remaining = (long) product.getStock();
+        Long remaining = (long) product.getStockCount();
         log.debug("Product {} decremented. Remaining: {}", productId, remaining);
         return remaining;
     }
@@ -69,7 +69,7 @@ public class InventoryService {
      */
     public Long getInventory(Long productId) {
         return productRepository.findById(productId)
-                .map(product -> (long) product.getStock())
+                .map(product -> (long) product.getStockCount())
                 .orElse(0L);
     }
 
@@ -82,10 +82,10 @@ public class InventoryService {
     public Long incrementInventory(Long productId) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product != null) {
-            product.setStock(product.getStock() + 1);
+            product.setStockCount(product.getStockCount() + 1);
             productRepository.save(product);
-            log.info("Product {} inventory incremented to {}", productId, product.getStock());
-            return (long) product.getStock();
+            log.info("Product {} inventory incremented to {}", productId, product.getStockCount());
+            return (long) product.getStockCount();
         }
         return 0L;
     }
@@ -97,7 +97,7 @@ public class InventoryService {
      */
     public boolean hasStock(Long productId) {
         return productRepository.findById(productId)
-                .map(product -> product.getStock() > 0)
+                .map(product -> product.getStockCount() > 0)
                 .orElse(false);
     }
 
