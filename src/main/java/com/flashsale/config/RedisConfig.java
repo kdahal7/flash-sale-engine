@@ -9,24 +9,32 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import java.net.URI;
 
 @Configuration
 public class RedisConfig {
 
-    @Value("${spring.redis.host}")
-    private String redisHost;
-
-    @Value("${spring.redis.port}")
-    private int redisPort;
-
-    @Value("${spring.redis.password:}")
-    private String redisPassword;
+    @Value("${REDIS_URL:redis://localhost:6379}")
+    private String redisUrl;
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
-        if (redisPassword != null && !redisPassword.isEmpty()) {
-            config.setPassword(redisPassword);
+        try {
+            URI uri = URI.create(redisUrl);
+            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
+            config.setHostName(uri.getHost());
+            config.setPort(uri.getPort() > 0 ? uri.getPort() : 6379);
+            
+            if (uri.getUserInfo() != null && uri.getUserInfo().contains(":")) {
+                String password = uri.getUserInfo().split(":", 2)[1];
+                config.setPassword(password);
+            }
+            
+            return new LettuceConnectionFactory(config);
+        } catch (Exception e) {
+            // Fallback to localhost for development
+            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration("localhost", 6379);
+            return new LettuceConnectionFactory(config);
         }
         return new LettuceConnectionFactory(config);
     }
