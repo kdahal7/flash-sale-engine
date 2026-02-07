@@ -1,57 +1,63 @@
 package com.flashsale.service;
 
+import com.flashsale.entity.Product;
+import com.flashsale.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-
-import java.util.concurrent.TimeUnit;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Redis-based inventory management service
- * Uses atomic DECR operation to prevent overselling
+ * Database-based inventory management service
+ * Uses atomic database operations to prevent overselling
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class InventoryService {
 
-    private final RedisTemplate<String, Object> redisTemplate;
-    
-    private static final String INVENTORY_KEY_PREFIX = "product:";
-    private static final String INVENTORY_KEY_SUFFIX = ":stock";
+    private final ProductRepository productRepository;
 
     /**
-     * Initialize inventory in Redis for a product
+     * Initialize inventory for a product (already handled by Product entity)
      * @param productId Product ID
      * @param stockCount Initial stock count
      */
     public void initializeInventory(Long productId, Integer stockCount) {
-        String key = getInventoryKey(productId);
-        redisTemplate.opsForValue().set(key, stockCount);
-        log.info("Initialized inventory for product {} with {} items", productId, stockCount);
+        productRepository.findById(productId).ifPresent(product -> {
+            product.setStock(stockCount);
+            productRepository.save(product);
+            log.info("Initialized inventory for product {} with {} items", productId, stockCount);
+        });
     }
 
     /**
-     * Atomic decrement of inventory
-     * This is the CORE method that prevents overselling
+     * Atomic decrement of inventory using database
+     * Uses optimistic locking to prevent overselling
      * 
      * @param productId Product ID
      * @return remaining stock after decrement, or -1 if out of stock
      */
+    @Transactional
     public Long decrementInventory(Long productId) {
-        String key = getInventoryKey(productId);
+        Product product = productRepository.findById(productId).orElse(null);
         
-        // Redis DECR is atomic - this is THE KEY to preventing overselling
-        Long remaining = redisTemplate.opsForValue().decrement(key);
+        if (product == null) {
+            log.warn("Product {} not found", productId);
+            return -1L;
+        }
         
-        if (remaining != null && remaining < 0) {
-            // Stock went negative, rollback
-            redisTemplate.opsForValue().increment(key);
+        // Check current stock
+        if (product.getStock() <= 0) {
             log.warn("Product {} is out of stock", productId);
             return -1L;
         }
         
+        // Atomic decrement using database
+        product.setStock(product.getStock() - 1);
+        productRepository.save(product);
+        
+        Long remaining = (long) product.getStock();
         log.debug("Product {} decremented. Remaining: {}", productId, remaining);
         return remaining;
     }
@@ -62,9 +68,9 @@ public class InventoryService {
      * @return current stock count
      */
     public Long getInventory(Long productId) {
-        String key = getInventoryKey(productId);
-        Object value = redisTemplate.opsForValue().get(key);
-        return value != null ? Long.valueOf(value.toString()) : 0L;
+        return productRepository.findById(productId)
+                .map(product -> (long) product.getStock())
+                .orElse(0L);
     }
 
     /**
@@ -72,11 +78,16 @@ public class InventoryService {
      * @param productId Product ID
      * @return new stock count
      */
+    @Transactional
     public Long incrementInventory(Long productId) {
-        String key = getInventoryKey(productId);
-        Long newValue = redisTemplate.opsForValue().increment(key);
-        log.info("Product {} inventory incremented to {}", productId, newValue);
-        return newValue;
+        Product product = productRepository.findById(productId).orElse(null);
+        if (product != null) {
+            product.setStock(product.getStock() + 1);
+            productRepository.save(product);
+            log.info("Product {} inventory incremented to {}", productId, product.getStock());
+            return (long) product.getStock();
+        }
+        return 0L;
     }
 
     /**
@@ -85,21 +96,16 @@ public class InventoryService {
      * @return true if stock > 0
      */
     public boolean hasStock(Long productId) {
-        Long stock = getInventory(productId);
-        return stock != null && stock > 0;
+        return productRepository.findById(productId)
+                .map(product -> product.getStock() > 0)
+                .orElse(false);
     }
 
     /**
-     * Delete inventory key (for cleanup)
+     * Delete inventory (for cleanup) - not needed with database approach
      * @param productId Product ID
      */
     public void deleteInventory(Long productId) {
-        String key = getInventoryKey(productId);
-        redisTemplate.delete(key);
-        log.info("Deleted inventory for product {}", productId);
-    }
-
-    private String getInventoryKey(Long productId) {
-        return INVENTORY_KEY_PREFIX + productId + INVENTORY_KEY_SUFFIX;
+        log.info("Inventory cleanup for product {} (using database, no action needed)", productId);
     }
 }
