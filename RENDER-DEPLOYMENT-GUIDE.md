@@ -1,10 +1,12 @@
 # 🚀 Deploy Flash Sale Engine on Render.com (FREE)
 
 ## ⚠️ CRITICAL: Render Auto-Detection Issue
-**If you see "Using Node.js version 22.22.0" and "mvn: command not found":**
-- Render is incorrectly detecting your Java project as Node.js
-- **SOLUTION**: Manually select **"Docker"** runtime (Step 2 below)
-- **DO NOT** rely on auto-detection - it fails for this project
+**✅ PROGRESS UPDATES:**
+- ~~"Using Node.js version 22.22.0"~~ → **FIXED!** Now using Docker
+- ~~"mvn: command not found"~~ → **FIXED!** Maven available in Docker
+- **CURRENT**: "openjdk:17-jdk-slim: not found" → **FIXED!** Updated to Eclipse Temurin
+
+**Latest fix pushed to GitHub - redeploy to get working Java environment!**
 
 ## Why Render.com is BETTER than Railway:
 - ✅ **750 hours/month FREE** (vs Railway's 500)
@@ -100,9 +102,14 @@ Value: postgresql://flashsale_user:XXXXX@dpg-XXXXX-a.oregon-postgres.render.com/
 
 ### Step 6: Deploy! 🎉
 1. Click **"Create Web Service"**
-2. **Watch the logs** - should show "Building using Dockerfile"
-3. Wait 5-8 minutes for Docker build
-4. Your app will be live at: `https://your-service-name.onrender.com`
+2. **Watch the logs** - should show "FROM eclipse-temurin:17-jdk-alpine"
+3. **Wait 5-8 minutes** for Docker build (downloading Java + Maven)
+4. **Success indicators**:
+   - ✅ "Installing Maven"
+   - ✅ "mvn clean package -DskipTests" 
+   - ✅ "BUILD SUCCESS"
+   - ✅ "Started FlashSaleApplication"
+5. Your app will be live at: `https://your-service-name.onrender.com`
 
 ---
 
