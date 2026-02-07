@@ -1,5 +1,11 @@
 # 🚀 Deploy Flash Sale Engine on Render.com (FREE)
 
+## ⚠️ CRITICAL: Render Auto-Detection Issue
+**If you see "Using Node.js version 22.22.0" and "mvn: command not found":**
+- Render is incorrectly detecting your Java project as Node.js
+- **SOLUTION**: Manually select **"Docker"** runtime (Step 2 below)
+- **DO NOT** rely on auto-detection - it fails for this project
+
 ## Why Render.com is BETTER than Railway:
 - ✅ **750 hours/month FREE** (vs Railway's 500)
 - ✅ **Free PostgreSQL database** included
@@ -17,27 +23,28 @@
 3. Sign up with **GitHub** (easiest option)
 4. Authorize Render to access your repositories
 
-### Step 2: Create Web Service (2 Options)
+### Step 2: Create Web Service (MANUAL CONFIG REQUIRED)
 
-#### Option A: Automatic (Recommended)
+🚨 **CRITICAL: Auto-detection fails, use manual setup:**
+
 1. After login, click **"New +"** → **"Web Service"**
 2. Connect your **GitHub repository**: `https://github.com/kdahal7/flash-sale-engine`
-3. Render will **auto-detect** the Dockerfile and configure everything!
+3. **IMMEDIATELY** scroll down and click **"Advanced"**
+4. **Change Runtime** from "Node.js" to **"Docker"**
+5. Configure these settings:
 
-#### Option B: Manual Configuration
-If auto-detection fails, configure manually:
 ```
 Name: flash-sale-engine
-Runtime: Docker
+Runtime: Docker (MUST select this!)
 Branch: main
 Root Directory: (leave blank)
 Dockerfile Path: ./Dockerfile
 ```
 
-**✅ Docker ensures Java + Maven are available!**
+**⚠️ If you don't change to Docker, it will fail with "mvn: command not found"**
 
 ### Step 3: Configure Environment Variables
-In the **Environment Variables** section, add:
+**BEFORE** creating the service, in the **Environment Variables** section, add:
 
 ```
 Key: JAVA_OPTS
@@ -93,8 +100,23 @@ Value: postgresql://flashsale_user:XXXXX@dpg-XXXXX-a.oregon-postgres.render.com/
 
 ### Step 6: Deploy! 🎉
 1. Click **"Create Web Service"**
-2. Wait 3-5 minutes for deployment
-3. Your app will be live at: `https://your-service-name.onrender.com`
+2. **Watch the logs** - should show "Building using Dockerfile"
+3. Wait 5-8 minutes for Docker build
+4. Your app will be live at: `https://your-service-name.onrender.com`
+
+---
+
+## 🔄 ALTERNATIVE: Native Java Environment
+
+If Docker approach still fails, try Native Java:
+
+1. **Create new Web Service**
+2. **Runtime**: Native  
+3. **Build Command**: `./mvnw clean package -DskipTests` 
+4. **Start Command**: `java -Dserver.port=$PORT -jar target/flash-sale-engine-1.0.0.jar`
+5. **Add Environment Variable**:
+   - Key: `JAVA_VERSION` 
+   - Value: `17`
 
 ---
 
