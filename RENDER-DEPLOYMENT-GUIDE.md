@@ -17,19 +17,24 @@
 3. Sign up with **GitHub** (easiest option)
 4. Authorize Render to access your repositories
 
-### Step 2: Create Web Service
+### Step 2: Create Web Service (2 Options)
+
+#### Option A: Automatic (Recommended)
 1. After login, click **"New +"** → **"Web Service"**
 2. Connect your **GitHub repository**: `https://github.com/kdahal7/flash-sale-engine`
-3. Configure the service:
+3. Render will **auto-detect** the Dockerfile and configure everything!
 
+#### Option B: Manual Configuration
+If auto-detection fails, configure manually:
 ```
 Name: flash-sale-engine
-Language: Java
+Runtime: Docker
 Branch: main
 Root Directory: (leave blank)
-Build Command: mvn clean package -DskipTests
-Start Command: java -Dserver.port=$PORT -jar target/flash-sale-engine-1.0.0.jar
+Dockerfile Path: ./Dockerfile
 ```
+
+**✅ Docker ensures Java + Maven are available!**
 
 ### Step 3: Configure Environment Variables
 In the **Environment Variables** section, add:
@@ -51,12 +56,40 @@ Plan: Free
 ```
 
 ### Step 5: Connect Database to App
-1. Go back to your **Web Service**
-2. In **Environment Variables**, add:
+1. **Find your database URL:**
+   - Go to your **PostgreSQL service** (flashsale-db)
+   - Click on the database name
+   - Look for **"Connections"** section
+   - Copy the **"External Database URL"** (starts with `postgresql://`)
+   
+2. **Add to your Web Service:**
+   - Go back to your **Web Service** (flash-sale-engine)
+   - Click **"Environment"** tab
+   - Add new environment variable:
 ```
 Key: DATABASE_URL
-Value: (copy from PostgreSQL service's "External Database URL")
+Value: postgresql://flashsale_user:XXXXX@dpg-XXXXX-a.oregon-postgres.render.com/flashsale
 ```
+   *(Use your actual URL from step 1)*
+
+---
+
+## 📍 **WHERE TO FIND DATABASE URL (Visual Guide)**
+
+### In Your Render Dashboard:
+1. **Left sidebar** → Click your **PostgreSQL service** name
+2. **Overview tab** → Scroll to **"Connections"** 
+3. **External Database URL** → Click **"Copy"** button
+4. **Format looks like**: `postgresql://user:password@host.render.com/dbname`
+
+### Then Paste It Into Web Service:
+1. **Left sidebar** → Click your **Web Service** name  
+2. **Environment tab** → **"Add Environment Variable"**
+3. **Key**: `DATABASE_URL`
+4. **Value**: *paste the copied URL*
+5. **Save Changes**
+
+---
 
 ### Step 6: Deploy! 🎉
 1. Click **"Create Web Service"**
@@ -118,9 +151,10 @@ curl -X POST "https://your-app-name.onrender.com/api/flash-sale/purchase" \
 ### If Build Fails:
 1. Check **"Logs"** tab in Render dashboard
 2. Common issues:
-   - Java version mismatch
-   - Missing environment variables
-   - Database connection issues
+   - **"mvn: command not found"** → Use Docker runtime (not Node.js)
+   - **Java version mismatch** → Dockerfile uses OpenJDK 17
+   - **Missing environment variables** → Add DATABASE_URL
+   - **Database connection issues** → Verify database is "Available"
 
 ### If Database Connection Fails:
 1. Verify `DATABASE_URL` is correctly set

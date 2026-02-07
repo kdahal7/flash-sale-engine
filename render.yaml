@@ -2,9 +2,8 @@ services:
   # Web Service (your Spring Boot app)
   - type: web
     name: flash-sale-engine
-    env: java
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -Dserver.port=$PORT -jar target/flash-sale-engine-1.0.0.jar
+    runtime: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         fromDatabase:
