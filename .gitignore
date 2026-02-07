@@ -1,0 +1,36 @@
+# Target directory for Maven builds
+target/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+
+# Test results
+results.jtl
+report/
+jmeter.log
+
+# Database files
+*.db
+
+# Redis dump
+dump.rdb
+
+# Temporary files
+tmp/
+temp/

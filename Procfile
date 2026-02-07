@@ -1,0 +1,1 @@
+web: java -jar target/flash-sale-engine-1.0.0.jar --server.port=$PORT

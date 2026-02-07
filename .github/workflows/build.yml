@@ -1,0 +1,89 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: flashsale
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    - name: Build with Maven
+      run: mvn clean install -DskipTests
+    
+    - name: Run tests
+      run: mvn test
+      env:
+        DATABASE_URL: jdbc:postgresql://localhost:5432/flashsale
+        DATABASE_USER: postgres
+        DATABASE_PASSWORD: postgres
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+    
+    - name: Build Docker image
+      run: docker build -t flash-sale-engine:${{ github.sha }} .
+    
+    - name: Run Load Test
+      run: |
+        # Start the application
+        docker run -d --name flash-sale-app \
+          --network host \
+          -e DATABASE_URL=jdbc:postgresql://localhost:5432/flashsale \
+          -e REDIS_HOST=localhost \
+          flash-sale-engine:${{ github.sha }}
+        
+        # Wait for app to be ready
+        sleep 30
+        
+        # Setup test data
+        curl -X POST http://localhost:8080/api/products \
+          -H "Content-Type: application/json" \
+          -d '{"name":"Test Product","price":99.99,"stockCount":100}'
+        
+        curl -X POST http://localhost:8080/api/products/1/sync-redis
+        
+        # Run JMeter test (if available)
+        # jmeter -n -t src/test/jmeter/flash-sale-test.jmx -l results.jtl
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: package
+        path: target/*.jar
