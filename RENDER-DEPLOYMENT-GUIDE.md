@@ -65,21 +65,35 @@ Plan: Free
 ```
 
 ### Step 5: Connect Database to App
-1. **Find your database URL:**
+1. **Find your database connection info:**
    - Go to your **PostgreSQL service** (flashsale-db)
    - Click on the database name
    - Look for **"Connections"** section
-   - Copy the **"External Database URL"** (starts with `postgresql://`)
+   - Note down: **Host, Port, Database, Username, Password**
    
-2. **Add to your Web Service:**
+2. **⚡ BETTER APPROACH - Use separate variables:**
    - Go back to your **Web Service** (flash-sale-engine)
    - Click **"Environment"** tab
-   - Add new environment variable:
+   - Add these **5 separate environment variables**:
+
 ```
-Key: DATABASE_URL
-Value: postgresql://flashsale_user:XXXXX@dpg-XXXXX-a.oregon-postgres.render.com/flashsale
+Key: DB_HOST
+Value: dpg-xxxxxxx-a.ohio-postgres.render.com
+
+Key: DB_PORT  
+Value: 5432
+
+Key: DB_NAME
+Value: flashsale_xxxx
+
+Key: DB_USER
+Value: flashsale_user
+
+Key: DB_PASSWORD
+Value: your_actual_password_here
 ```
-   *(Use your actual URL from step 1)*
+
+**✅ This avoids URL encoding issues with special characters!**
 
 ---
 
@@ -186,9 +200,11 @@ curl -X POST "https://your-app-name.onrender.com/api/flash-sale/purchase" \
    - **Database connection issues** → Verify database is "Available"
 
 ### If Database Connection Fails:
-1. Verify `DATABASE_URL` is correctly set
-2. Ensure database and web service are in same region
-3. Check database is "Available" status
+1. **Check individual DB variables**: DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD all set correctly
+2. **Verify password has no quotes** - use raw password value only
+3. **Ensure database and web service** are in same region
+4. **Check database is "Available"** status
+5. **Common fix**: Use separate DB variables instead of DATABASE_URL to avoid URL encoding issues
 
 ### Performance Issues:
 - Free tier has limited resources

@@ -3,9 +3,9 @@ spring:
     name: flash-sale-engine
   
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/flashsale}
-    username: ${DATABASE_USER:postgres}
-    password: ${DATABASE_PASSWORD:k6226}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:flashsale}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:k6226}
     driver-class-name: org.postgresql.Driver
   
   jpa:
