@@ -1,8 +1,6 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
-    "startCommand": "java -Dserver.port=$PORT -jar target/flash-sale-engine-1.0.0.jar",
-    "healthcheckPath": "/actuator/health",
-    "healthcheckTimeout": 300
+    "startCommand": "java -Dserver.port=$PORT -jar target/flash-sale-engine-1.0.0.jar"
   }
 }
