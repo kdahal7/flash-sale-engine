@@ -1,11 +1,10 @@
-# Use OpenJDK 17 for building and running
-FROM openjdk:17-jdk-slim
+# Use Eclipse Temurin JDK 17 (official replacement for OpenJDK)
+FROM eclipse-temurin:17-jdk-alpine
 
 # Install Maven
-RUN apt-get update && \
-    apt-get install -y maven && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk update && \
+    apk add --no-cache maven && \
+    rm -rf /var/cache/apk/*
 
 # Set working directory
 WORKDIR /app
