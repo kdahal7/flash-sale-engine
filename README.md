@@ -1,6 +1,16 @@
 java -versionmvn -version# 🚀 High-Concurrency Flash Sale Engine
 
+[![Java](https://img.shields.io/badge/Java-17-orange?style=flat&logo=openjdk)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.0-brightgreen?style=flat&logo=spring)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red?style=flat&logo=redis)](https://redis.io/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A production-grade flash sale system capable of handling **1000+ concurrent users** with zero overselling, built with Java 17 + Spring Boot 3.
+
+## 🌐 Live Demo
+> **Want to see it in action?** Deploy it for FREE in 10 minutes!  
+> 📖 **[Deploy Now Guide](DEPLOY-NOW.md)** - Step-by-step instructions for Render.com (100% Free)
 
 ## 🎯 Why This Project Stands Out
 
