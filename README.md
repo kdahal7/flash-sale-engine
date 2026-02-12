@@ -336,10 +336,7 @@ Build a React/Vue/Angular app that calls these endpoints. Perfect for portfolio 
 
 MIT License - feel free to use this project in your portfolio!
 
-## 🤝 Contributing
-
-Contributions welcome! Please read `CONTRIBUTING.md` first.
 
 ## 📧 Contact
 
-Built with ❤️ by [Your Name]
+Built with ❤️ by Kaushal
