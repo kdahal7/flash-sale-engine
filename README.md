@@ -9,8 +9,20 @@ java -versionmvn -version# 🚀 High-Concurrency Flash Sale Engine
 A production-grade flash sale system capable of handling **1000+ concurrent users** with zero overselling, built with Java 17 + Spring Boot 3.
 
 ## 🌐 Live Demo
-> **Want to see it in action?** Deploy it for FREE in 10 minutes!  
-> 📖 **[Deploy Now Guide](DEPLOY-NOW.md)** - Step-by-step instructions for Render.com (100% Free)
+
+**🎉 [Try the Live API](https://flash-sale-engine-1.onrender.com)**
+
+### Quick Test:
+- 🏥 Health Check: https://flash-sale-engine-1.onrender.com/actuator/health
+- 📦 View Products: https://flash-sale-engine-1.onrender.com/api/products
+
+### Interactive Demo:
+1. Open `demo.html` in your browser for a full web interface
+2. Create products, make purchases, and run concurrent load tests
+3. No setup required - just double-click and use!
+
+> **Want to deploy your own?** Deploy it for FREE in 10 minutes!  
+> 📖 **[Deploy Now Guide](DEPLOY-NOW.md)** - Step-by-step instructions for Render.com
 
 ## 🎯 Why This Project Stands Out
 
@@ -260,6 +272,48 @@ heroku addons:create heroku-postgresql
 heroku addons:create heroku-redis
 git push heroku main
 ```
+
+## 📡 How to Use the API
+
+This is a REST API backend. Users interact with it through HTTP requests. Here are several ways to use it:
+
+### Method 1: Interactive Web UI (Easiest!)
+1. Open `demo.html` in your browser
+2. Full graphical interface with forms
+3. Create products, purchase items, run load tests
+
+### Method 2: PowerShell Script
+```powershell
+# Test the live API
+.\test-live-api.ps1
+```
+
+### Method 3: curl Commands
+```bash
+# Create a product
+curl -X POST https://flash-sale-engine-1.onrender.com/api/products \
+  -H "Content-Type: application/json" \
+  -d '{"name":"iPhone 15","description":"Latest iPhone","price":999.99,"stock":50}'
+
+# Get all products
+curl https://flash-sale-engine-1.onrender.com/api/products
+
+# Make a purchase
+curl -X POST https://flash-sale-engine-1.onrender.com/api/flash-sales/purchase \
+  -H "Content-Type: application/json" \
+  -d '{"productId":1,"email":"user@example.com","quantity":1}'
+```
+
+### Method 4: Postman
+1. Import URL: `https://flash-sale-engine-1.onrender.com`
+2. Test endpoints:
+   - `POST /api/products` - Create product
+   - `GET /api/products` - List products
+   - `GET /api/products/{id}` - Get product details
+   - `POST /api/flash-sales/purchase` - Make purchase
+
+### Method 5: Your Own Frontend
+Build a React/Vue/Angular app that calls these endpoints. Perfect for portfolio projects!
 
 ## 🎯 Interview Questions This Project Answers
 
