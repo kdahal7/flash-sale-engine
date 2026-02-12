@@ -49,20 +49,33 @@ Your GitHub repo: https://github.com/kdahal7/flash-sale-engine
 5. **Add Environment Variables**
    Click **"Advanced"** → **"Add Environment Variable"**
    
-   Add these for PostgreSQL:
-   ```
-   DB_HOST = [from your database connection info]
-   DB_PORT = 5432
-   DB_NAME = [from your database]
-   DB_USER = [from your database]
-   DB_PASSWORD = [from your database]
-   ```
-   
    **How to get these values:**
    - Go to your PostgreSQL database on Render
-   - Click "Info" tab
-   - Copy the values from "Internal Database URL"
-   - Format: `postgresql://USER:PASSWORD@HOST/DATABASE`
+   - Click "Info" tab or "Connect" section
+   - Copy the "Internal Database URL"
+   - It looks like: `postgresql://USER:PASSWORD@HOST/DATABASE`
+   
+   **Example URL:**
+   ```
+   postgresql://smart_waste_user:cV3r3g6Ue9A@dpg-d66tupruibrs-a.render.com/smart_waste_db
+   ```
+   
+   **Break it down:**
+   ```
+   postgresql://[USER]:[PASSWORD]@[HOST]/[DATABASE]
+                 └─────┘ └────────┘ └───┘  └────────┘
+   ```
+   
+   **Add these 5 environment variables:**
+   ```
+   DB_HOST     = dpg-d66tupruibrs-a.render.com   (the part after @, before /)
+   DB_PORT     = 5432                             (always 5432 for PostgreSQL)
+   DB_NAME     = smart_waste_db                   (the part after last /)
+   DB_USER     = smart_waste_user                 (the part before first :)
+   DB_PASSWORD = cV3r3g6Ue9A                      (the part between : and @)
+   ```
+   
+   ⚠️ **IMPORTANT**: Make sure DB_HOST includes `.render.com` at the end!
 
 6. **Click "Create Web Service"**
    - ⏳ Wait 5-8 minutes for deployment
