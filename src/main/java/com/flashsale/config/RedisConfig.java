@@ -2,7 +2,9 @@ package com.flashsale.config;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -16,6 +18,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 
 @Configuration
+@Slf4j
 public class RedisConfig {
 
     @Value("${spring.data.redis.host:localhost}")
@@ -32,6 +35,8 @@ public class RedisConfig {
 
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
+        log.info("Configuring Redis connection to {}:{} (SSL: {})", redisHost, redisPort, sslEnabled);
+        
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(redisHost);
         config.setPort(redisPort);
@@ -45,6 +50,7 @@ public class RedisConfig {
 
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(socketOptions)
+                .autoReconnect(true)
                 .build();
 
         LettuceClientConfiguration.LettuceClientConfigurationBuilder clientConfig =
@@ -56,13 +62,18 @@ public class RedisConfig {
             clientConfig.useSsl().disablePeerVerification();
         }
 
-        return new LettuceConnectionFactory(config, clientConfig.build());
+        LettuceConnectionFactory factory = new LettuceConnectionFactory(config, clientConfig.build());
+        factory.setShareNativeConnection(false);
+        factory.setValidateConnection(false);
+        
+        return factory;
     }
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+        template.setEnableTransactionSupport(false);
         
         // Use String serializer for keys
         template.setKeySerializer(new StringRedisSerializer());
@@ -73,6 +84,8 @@ public class RedisConfig {
         template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
         
         template.afterPropertiesSet();
+        
+        log.info("RedisTemplate configured successfully");
         return template;
     }
 }

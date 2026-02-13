@@ -25,6 +25,10 @@ spring:
       ssl:
         enabled: ${REDIS_SSL:true}
       connect-timeout: 10000ms
+      lettuce:
+        pool:
+          enabled: false
+        shutdown-timeout: 100ms
 
 server:
   port: ${PORT:8080}

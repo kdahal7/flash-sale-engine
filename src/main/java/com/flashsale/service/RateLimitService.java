@@ -42,27 +42,33 @@ public class RateLimitService {
             return true;
         }
 
-        String key = getRateLimitKey(userId);
-        
-        // Get current count
-        Object currentObj = redisTemplate.opsForValue().get(key);
-        long currentCount = currentObj != null ? Long.parseLong(currentObj.toString()) : 0;
+        try {
+            String key = getRateLimitKey(userId);
+            
+            // Get current count
+            Object currentObj = redisTemplate.opsForValue().get(key);
+            long currentCount = currentObj != null ? Long.parseLong(currentObj.toString()) : 0;
 
-        if (currentCount >= maxRequests) {
-            log.warn("Rate limit exceeded for user: {}. Count: {}", userId, currentCount);
-            return false;
+            if (currentCount >= maxRequests) {
+                log.warn("Rate limit exceeded for user: {}. Count: {}", userId, currentCount);
+                return false;
+            }
+
+            // Increment counter
+            Long newCount = redisTemplate.opsForValue().increment(key);
+            
+            if (newCount == 1) {
+                // First request in window, set expiration
+                redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
+            }
+
+            log.debug("User {} rate limit: {}/{} requests", userId, newCount, maxRequests);
+            return true;
+        } catch (Exception e) {
+            log.warn("Redis connection failed for rate limiting, allowing request: {}", e.getMessage());
+            // If Redis is down, allow the request (fail open)
+            return true;
         }
-
-        // Increment counter
-        Long newCount = redisTemplate.opsForValue().increment(key);
-        
-        if (newCount == 1) {
-            // First request in window, set expiration
-            redisTemplate.expire(key, windowSeconds, TimeUnit.SECONDS);
-        }
-
-        log.debug("User {} rate limit: {}/{} requests", userId, newCount, maxRequests);
-        return true;
     }
 
     /**
@@ -70,9 +76,13 @@ public class RateLimitService {
      * @param userId User ID
      */
     public void resetRateLimit(String userId) {
-        String key = getRateLimitKey(userId);
-        redisTemplate.delete(key);
-        log.info("Reset rate limit for user: {}", userId);
+        try {
+            String key = getRateLimitKey(userId);
+            redisTemplate.delete(key);
+            log.info("Reset rate limit for user: {}", userId);
+        } catch (Exception e) {
+            log.warn("Failed to reset rate limit for user {}: {}", userId, e.getMessage());
+        }
     }
 
     /**
@@ -81,10 +91,15 @@ public class RateLimitService {
      * @return remaining requests
      */
     public int getRemainingRequests(String userId) {
-        String key = getRateLimitKey(userId);
-        Object currentObj = redisTemplate.opsForValue().get(key);
-        long currentCount = currentObj != null ? Long.parseLong(currentObj.toString()) : 0;
-        return Math.max(0, maxRequests - (int) currentCount);
+        try {
+            String key = getRateLimitKey(userId);
+            Object currentObj = redisTemplate.opsForValue().get(key);
+            long currentCount = currentObj != null ? Long.parseLong(currentObj.toString()) : 0;
+            return Math.max(0, maxRequests - (int) currentCount);
+        } catch (Exception e) {
+            log.warn("Failed to get remaining requests for user {}: {}", userId, e.getMessage());
+            return maxRequests; // Return max if Redis is down
+        }
     }
 
     private String getRateLimitKey(String userId) {
