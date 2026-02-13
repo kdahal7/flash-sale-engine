@@ -100,6 +100,11 @@
             transform: translateY(0);
         }
         
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
         .products-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -169,7 +174,7 @@
         }
         
         .api-url {
-            background: #f8f9fa;
+            background: rgba(255,255,255,0.2);
             padding: 10px;
             border-radius: 5px;
             font-family: monospace;
@@ -186,6 +191,12 @@
         
         .loading.active {
             opacity: 1;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -194,7 +205,7 @@
         <header>
             <h1>⚡ Flash Sale Engine</h1>
             <p class="subtitle">High-Performance Concurrent Purchase System</p>
-            <div class="api-url">API: https://flash-sale-engine-1.onrender.com</div>
+            <div class="api-url">Live at: https://flash-sale-engine-1.onrender.com</div>
         </header>
 
         <!-- Create Product Section -->
@@ -238,8 +249,8 @@
                     <input type="number" id="purchaseProductId" placeholder="1" required>
                 </div>
                 <div class="form-group">
-                    <label>Your Email:</label>
-                    <input type="email" id="purchaseEmail" placeholder="your@email.com" required>
+                    <label>Your Email/User ID:</label>
+                    <input type="text" id="purchaseUserId" placeholder="user@email.com" required>
                 </div>
                 <div class="form-group">
                     <label>Quantity:</label>
@@ -268,7 +279,8 @@
     </div>
 
     <script>
-        const API_URL = 'https://flash-sale-engine-1.onrender.com';
+        // Use relative URL so it works both locally and on Render
+        const API_URL = window.location.origin;
 
         // Load products on page load
         window.onload = () => {
@@ -303,9 +315,12 @@
                 
                 if (response.ok) {
                     result.className = 'result success';
-                    result.innerHTML = `✅ Product created successfully!<br>ID: ${data.id}<br>Name: ${data.name}`;
+                    result.innerHTML = `✅ Product created successfully!<br>ID: ${data.id}<br>Name: ${data.name}<br><em>Don't forget to sync to Redis!</em>`;
                     result.style.display = 'block';
                     e.target.reset();
+                    
+                    // Auto-sync to Redis
+                    await syncProductToRedis(data.id);
                     loadProducts();
                 } else {
                     throw new Error(data.message || 'Failed to create product');
@@ -320,6 +335,17 @@
             }
         });
 
+        // Sync product to Redis
+        async function syncProductToRedis(productId) {
+            try {
+                await fetch(`${API_URL}/api/products/${productId}/sync-redis`, {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Failed to sync to Redis:', error);
+            }
+        }
+
         // Load Products
         async function loadProducts() {
             const container = document.getElementById('productsList');
@@ -327,6 +353,11 @@
 
             try {
                 const response = await fetch(`${API_URL}/api/products`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const products = await response.json();
 
                 if (products.length === 0) {
@@ -343,13 +374,16 @@
                             Stock: <span class="${p.stock > 10 ? 'stock-high' : 'stock-low'}">${p.stock} units</span>
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8em; color: #999;">ID: ${p.id}</div>
-                        <button onclick="selectProduct(${p.id}, '${p.name}')" style="margin-top: 10px;">
+                        <button onclick="selectProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')" style="margin-top: 10px;">
                             Quick Purchase
+                        </button>
+                        <button onclick="syncProductToRedis(${p.id})" style="margin-top: 10px; background: #28a745;">
+                            Sync to Redis
                         </button>
                     </div>
                 `).join('');
             } catch (error) {
-                container.innerHTML = `<p style="color: red;">Error loading products: ${error.message}</p>`;
+                container.innerHTML = `<p style="color: red;">❌ Error loading products: ${error.message}</p>`;
             }
         }
 
@@ -359,7 +393,7 @@
             document.getElementById('purchaseForm').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Purchase Product
+        // Purchase Product - CORRECTED ENDPOINT
         document.getElementById('purchaseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -369,14 +403,15 @@
             loading.classList.add('active');
             btn.disabled = true;
 
+            const productId = parseInt(document.getElementById('purchaseProductId').value);
             const purchase = {
-                productId: parseInt(document.getElementById('purchaseProductId').value),
-                email: document.getElementById('purchaseEmail').value,
+                userId: document.getElementById('purchaseUserId').value,
                 quantity: parseInt(document.getElementById('purchaseQuantity').value)
             };
 
             try {
-                const response = await fetch(`${API_URL}/api/flash-sales/purchase`, {
+                // CORRECTED: Use /api/buy/{productId} endpoint
+                const response = await fetch(`${API_URL}/api/buy/${productId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(purchase)
@@ -404,11 +439,16 @@
             }
         });
 
-        // Run Load Test
+        // Run Load Test - CORRECTED ENDPOINT
         async function runLoadTest() {
+            const btn = event.target;
+            const loading = btn.querySelector('.loading');
             const result = document.getElementById('testResult');
             const productId = parseInt(document.getElementById('testProductId').value);
             const count = parseInt(document.getElementById('concurrentRequests').value);
+            
+            loading.classList.add('active');
+            btn.disabled = true;
             
             result.className = 'result';
             result.innerHTML = '⏳ Running concurrent purchases...';
@@ -418,16 +458,16 @@
             const promises = [];
 
             for (let i = 0; i < count; i++) {
+                // CORRECTED: Use /api/buy/{productId} endpoint
                 promises.push(
-                    fetch(`${API_URL}/api/flash-sales/purchase`, {
+                    fetch(`${API_URL}/api/buy/${productId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            productId: productId,
-                            email: `test${i}@example.com`,
+                            userId: `test${i}@example.com`,
                             quantity: 1
                         })
-                    }).then(r => r.json())
+                    }).then(r => r.json()).catch(err => ({ success: false, message: err.message }))
                 );
             }
 
@@ -453,6 +493,9 @@
             } catch (error) {
                 result.className = 'result error';
                 result.innerHTML = `❌ Test failed: ${error.message}`;
+            } finally {
+                loading.classList.remove('active');
+                btn.disabled = false;
             }
         }
     </script>
