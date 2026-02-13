@@ -301,7 +301,7 @@
                 name: document.getElementById('productName').value,
                 description: document.getElementById('productDesc').value,
                 price: parseFloat(document.getElementById('productPrice').value),
-                stock: parseInt(document.getElementById('productStock').value)
+                stockCount: parseInt(document.getElementById('productStock').value)
             };
 
             try {
@@ -371,7 +371,7 @@
                         <div style="color: #666; font-size: 0.9em; margin-bottom: 10px;">${p.description}</div>
                         <div class="product-price">$${p.price.toFixed(2)}</div>
                         <div class="product-stock">
-                            Stock: <span class="${p.stock > 10 ? 'stock-high' : 'stock-low'}">${p.stock} units</span>
+                            Stock: <span class="${p.stockCount > 10 ? 'stock-high' : 'stock-low'}">${p.stockCount} units</span>
                         </div>
                         <div style="margin-top: 10px; font-size: 0.8em; color: #999;">ID: ${p.id}</div>
                         <button onclick="selectProduct(${p.id}, '${p.name.replace(/'/g, "\\'")}')" style="margin-top: 10px;">
